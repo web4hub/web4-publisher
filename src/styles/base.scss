@@ -1,0 +1,314 @@
+:root {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  color: #e8edf5;
+  background: #070a0f;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.site {
+  min-height: 100vh;
+}
+
+.site-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(7, 10, 15, 0.85);
+  backdrop-filter: blur(18px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-inner {
+  max-width: 1180px;
+  margin: auto;
+  padding: 18px 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+
+  border: 1px solid #4de1ff;
+  color: #4de1ff;
+  font-size: 12px;
+}
+
+nav {
+  display: flex;
+  gap: 22px;
+  color: #9ca8b8;
+}
+
+nav a:hover {
+  color: white;
+}
+
+.container {
+  max-width: 1180px;
+  margin: auto;
+  padding: 0 24px;
+}
+
+.hero {
+  padding: 110px 0 90px;
+  max-width: 850px;
+}
+
+.eyebrow {
+  color: #4de1ff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.hero h1 {
+  margin: 18px 0;
+  font-size: clamp(48px, 8vw, 92px);
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+}
+
+.hero p {
+  max-width: 680px;
+  color: #aeb8c8;
+  font-size: 20px;
+  line-height: 1.7;
+}
+
+.directive {
+  margin-top: 12px;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  color: #8e9bad;
+}
+
+.directive code {
+  color: #4de1ff;
+  min-width: 40px;
+}
+
+.publication-section {
+  padding-bottom: 100px;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  margin-bottom: 28px;
+}
+
+.section-heading h2 {
+  margin: 8px 0 0;
+  font-size: 34px;
+}
+
+.count {
+  color: #7f8b9d;
+}
+
+.post-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+.post-card {
+  padding: 26px;
+  min-height: 300px;
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.025);
+
+  display: flex;
+  flex-direction: column;
+}
+
+.post-card:hover {
+  border-color: rgba(77, 225, 255, 0.55);
+  transform: translateY(-2px);
+}
+
+.post-meta {
+  display: flex;
+  gap: 14px;
+  color: #718095;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.post-card h3 {
+  font-size: 27px;
+  margin: 25px 0 12px;
+}
+
+.post-card p {
+  color: #9ca8b8;
+  line-height: 1.7;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.tag-list span {
+  font-size: 12px;
+  color: #7edfff;
+}
+
+.post-card button {
+  margin-top: auto;
+  width: max-content;
+
+  border: 0;
+  background: transparent;
+  color: #4de1ff;
+}
+
+.site-footer {
+  max-width: 1180px;
+  margin: auto;
+  padding: 28px 24px;
+
+  display: flex;
+  justify-content: space-between;
+
+  color: #687486;
+  font-size: 12px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.back-button {
+  margin-top: 50px;
+  border: 0;
+  background: transparent;
+  color: #4de1ff;
+}
+
+.post-view {
+  max-width: 800px;
+  margin: 70px auto 120px;
+}
+
+.post-header h1 {
+  font-size: clamp(42px, 7vw, 72px);
+  line-height: 1;
+  letter-spacing: -0.05em;
+  margin: 24px 0;
+}
+
+.post-description {
+  color: #aeb8c8;
+  font-size: 20px;
+  line-height: 1.7;
+}
+
+.markdown {
+  margin-top: 60px;
+  color: #c6ced9;
+  line-height: 1.85;
+  font-size: 17px;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+  color: white;
+  line-height: 1.2;
+}
+
+.markdown h2 {
+  margin-top: 55px;
+}
+
+.markdown pre {
+  overflow-x: auto;
+  padding: 20px;
+  background: #030508;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.markdown code {
+  color: #7edfff;
+}
+
+@media (max-width: 700px) {
+  nav {
+    display: none;
+  }
+
+  .hero {
+    padding-top: 70px;
+  }
+
+  .hero h1 {
+    font-size: 54px;
+  }
+
+  .directive {
+    align-items: flex-start;
+  }
+
+  .site-footer {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
