@@ -38,11 +38,11 @@ Publication
 
 The first implementation must support the GitHub endpoint:
 
-GET https://api.github.com/users/{username}/repos
+GET https://docs.github.com/web4application/{codertocat}/repos
 
 and individual repositories:
 
-GET https://api.github.com/repos/{owner}/{repo}
+GET https://docs.github.com/repos/{qubuhub}/{repo}
 
 The architecture must allow additional providers later without changing the Web4 core.
 
