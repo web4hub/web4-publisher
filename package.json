@@ -1,0 +1,28 @@
+{
+  "name": "@web4hub/web4-publisher",
+  "version": "1.0.0",
+  "description": "Semantic-first static publishing engine for Web4.",
+  "type": "module",
+  "private": false,
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run validate && vite build",
+    "preview": "vite preview",
+    "validate": "node scripts/validate-content.js",
+    "generate:index": "node scripts/generate-index.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "gray-matter": "^4.0.3",
+    "marked": "^15.0.12",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.2",
+    "sass": "^1.92.1",
+    "vite": "^7.1.5",
+    "vitest": "^3.2.4"
+  }
+}
