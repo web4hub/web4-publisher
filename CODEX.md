@@ -8,7 +8,15 @@ tags:
   - decentralized
 theme: glitch
 ---
+Perfect. That gives us a clean baseline for web4hub/web4-publisher.
 
+The implementation target is now:
+
+Markdown/MDX → Validate → Content Model → Theme → Render → Vite Build → GitHub Pages/Vercel
+
+with ^↑D, ^D, and ^|D reserved as the semantic execution layer rather than mixing protocol complexity into the initial publisher.
+
+When we move to implementation, I’d make the first milestone Web4 Publisher v1.0.0, with the repository buildable from a fresh clone and the CI pipeline enforcing content/schema/build validation.
 # Building Web4 Decentralized Platforms
 
 Web4 architecture focuses on...
