@@ -1,11 +1,16 @@
-web4-publisher
+# web4-publisher
 
 A source-aware publication engine that discovers digital resources, normalizes their metadata, validates their identity, generates cryptographic content identities, and publishes them as Web4 resources.
 
 1. Project definition
 
 web4-publisher converts external digital resources into canonical Web4 publication manifests.
-
+```bash
+* M$ curl -H "Authorization: github_pat_" https://api.github.com/users/auraecosystem/ -I
+* HTTP/2 200
+* X-OAuth-Scopes: repo, user
+* X-Accepted-OAuth-Scopes: user
+```
 Version:
 
 1.0.0
@@ -448,6 +453,10 @@ pushed_at                       →    provenance.pushed_at
 
 The remaining GitHub URLs remain available from the upstream API and can be retrieved when required. They should not pollute the canonical Web4 identity unless explicitly required by a future schema.
 
+```bashrc
+export Model_GitHub_secret=“github_pat_11B36BGJY09AiI3PCwCub8_”
+export Copilot_api=“github_pat_11B36BGJY0pbRYfR1G24dB_”
+```
 ⸻
 
 8. GitHub adapter
