@@ -1,0 +1,50 @@
+.theme-glitch {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 0, 128, 0.06),
+      transparent 30%
+    ),
+    #07050a;
+
+  .post-card:hover {
+    box-shadow:
+      4px 0 rgba(255, 0, 128, 0.5),
+      -4px 0 rgba(0, 255, 255, 0.5);
+  }
+}
+
+.theme-win95 {
+  background: #008080;
+  color: #000;
+
+  .site-header {
+    background: #c0c0c0;
+    border-bottom: 3px solid #000;
+  }
+
+  .brand,
+  nav,
+  nav a {
+    color: #000;
+  }
+
+  .hero,
+  .post-card,
+  .markdown {
+    color: #000;
+  }
+
+  .post-card {
+    background: #c0c0c0;
+    border: 3px outset #fff;
+  }
+
+  .post-card h3,
+  .section-heading h2,
+  .markdown h1,
+  .markdown h2,
+  .markdown h3 {
+    color: #000080;
+  }
+}
