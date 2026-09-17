@@ -16,7 +16,7 @@ It provides:
 
 ## Architecture
 
-```text
+```md
 Markdown / MDX
       ↓
 Parse
@@ -32,3 +32,15 @@ Render
 Vite
       ↓
 Static Publication
+```
+```^↑D
+
+detect → analyze → infer → classify → register → learn
+
+^D
+
+create → validate
+
+^|D
+
+execute
