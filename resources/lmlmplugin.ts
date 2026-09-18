@@ -1,0 +1,825 @@
+import {
+	Canvas,
+	CanvasView,
+	ItemView,
+	Menu,
+	MenuItem,
+	Modal,
+	Notice,
+	Plugin,
+	TFolder,
+	setIcon,
+	setTooltip,
+} from "obsidian";
+import { around } from "monkey-around";
+import {
+	addAskAIButton,
+	addRegenerateResponse,
+	handleCallAI_Question,
+	addAskAIWithModelButton,
+	addAskQuestionWithModelButton,
+} from "./actions/canvasNodeMenuActions/advancedCanvas";
+import {
+	addGenerateCardTitleButton,
+	addGenerateGroupNameButton,
+} from "./actions/canvasNodeMenuActions/titleGenerator";
+import {
+	AugmentedCanvasSettings,
+	DEFAULT_SETTINGS,
+	migrateAutoPreviewHtmlSettings,
+	SystemPrompt,
+} from "./settings/AugmentedCanvasSettings";
+import SettingsTab from "./settings/SettingsTab";
+import { CustomQuestionModal } from "./Modals/CustomQuestionModal";
+import { CanvasNode } from "./obsidian/canvas-internal";
+import { createCanvasGroup, getActiveCanvas, setupCanvasIndicatorPersistence } from "./utils";
+import SystemPromptsModal from "./Modals/SystemPromptsModal";
+
+import { getFilesContent } from "./obsidian/fileUtil";
+import { parseCsv } from "./utils/csvUtils";
+import { handleAddRelevantQuestions } from "./actions/commands/relevantQuestions";
+import { handleGenerateImage } from "./actions/canvasNodeContextMenuActions/generateImage";
+import { initLogDebug } from "./logDebug";
+import FolderSuggestModal from "./Modals/FolderSuggestModal";
+import { calcHeight, createNode, findCanvasMenuHost } from "./obsidian/canvas-patches";
+import { insertSystemPrompt } from "./actions/commands/insertSystemPrompt";
+import { runPromptFolder } from "./actions/commands/runPromptFolder";
+import { InputModal } from "./Modals/InputModal";
+import { runYoutubeCaptions } from "./actions/commands/youtubeCaptions";
+import { insertWebsiteContent } from "./actions/commands/websiteContent";
+import { noteGenerator } from "./actions/canvasNodeMenuActions/noteGenerator";
+import { setupHtmlPreviewPersistence } from "./utils/htmlPreview";
+import { ObservabilityClient } from "./utils/observability";
+import { cancelActiveGenerations } from "./utils/generationStatus";
+import { configureLLMObservability } from "./utils/llmObservability";
+import { getImageGenerationPrompt } from "./utils/imageGenerationPrompt";
+
+// @ts-expect-error
+import promptsCsvText from "./data/prompts.csv.txt";
+
+export default class AugmentedCanvasPlugin extends Plugin {
+	triggerByPlugin: boolean = false;
+	patchSucceed: boolean = false;
+	private cleanupIndicatorPersistence?: () => void;
+	private cleanupHtmlPreviewPersistence?: () => void;
+	observabilityClient: ObservabilityClient | null = null;
+
+	settings: AugmentedCanvasSettings;
+
+	async onload() {
+		await this.loadSettings();
+		this.observabilityClient = new ObservabilityClient(this.settings.observability);
+		configureLLMObservability(this.observabilityClient, (provider, model) => {
+			const pricing = this.settings.models.find(entry => entry.providerId === provider.id && entry.model === model);
+			return {
+				pluginVersion: this.manifest.version,
+				vaultName: this.app.vault.getName(),
+				canvasName: this.app.workspace.getActiveFile()?.name,
+				inputCostPerMillion: pricing?.inputCostPerMillion,
+				outputCostPerMillion: pricing?.outputCostPerMillion,
+			};
+		});
+		this.addSettingTab(new SettingsTab(this.app, this));
+
+		// this.registerCommands();
+		// this.registerCanvasEvents();
+		// this.registerCustomIcons();
+
+		// this.patchCanvas();
+		this.app.workspace.onLayoutReady(() => {
+			initLogDebug(this.settings);
+
+			this.patchCanvasMenu();
+			this.addCommands();
+			this.patchNoteContextMenu();
+			this.patchCanvasSelectionMenu();
+
+			// Set up persistent model indicators
+			this.cleanupIndicatorPersistence = setupCanvasIndicatorPersistence(this.app);
+
+			// Set up persistent HTML previews
+			this.cleanupHtmlPreviewPersistence = setupHtmlPreviewPersistence(
+				this.app,
+				() => this.settings.autoPreviewHtml ?? false
+			);
+
+			if (this.settings.systemPrompts.length === 0) {
+				this.fetchSystemPrompts();
+			}
+		});
+		// this.patchCanvasInteraction();
+		// this.patchCanvasNode();
+
+		// const generator = noteGenerator(this.app, this.settings, this.logDebug)
+		// const generator = noteGenerator(this.app);
+
+		// this.addSettingTab(new SettingsTab(this.app, this))
+
+		// this.addCommand({
+		// 	id: "next-note",
+		// 	name: "Create next note",
+		// 	callback: () => {
+		// 		generator.nextNote();
+		// 	},
+		// 	hotkeys: [
+		// 		{
+		// 			modifiers: ["Alt", "Shift"],
+		// 			key: "N",
+		// 		},
+		// 	],
+		// });
+
+		// this.addCommand({
+		// 	id: "generate-note",
+		// 	name: "Generate AI note",
+		// 	callback: () => {
+		// 		generator.generateNote();
+		// 	},
+		// 	hotkeys: [
+		// 		{
+		// 			modifiers: ["Alt", "Shift"],
+		// 			key: "G",
+		// 		},
+		// 	],
+		// });
+	}
+
+	onunload() {
+		cancelActiveGenerations();
+		// Clean up event listeners
+		if (this.cleanupIndicatorPersistence) {
+			this.cleanupIndicatorPersistence();
+		}
+		if (this.cleanupHtmlPreviewPersistence) {
+			this.cleanupHtmlPreviewPersistence();
+		}
+		configureLLMObservability(null);
+		void this.observabilityClient?.shutdown();
+	}
+
+	async loadSettings() {
+		const loadedSettings = await this.loadData();
+	
+		// Merge settings with defaults
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedSettings);
+		const htmlPreviewSettingsMigrated = migrateAutoPreviewHtmlSettings(this.settings);
+
+		const legacyDefaultIds = new Set([
+			"openai",
+			"anthropic",
+			"groq",
+			"openrouter",
+			"gemini",
+			"ollama",
+		]);
+		const hasCustomProviders = this.settings.providers.some(
+			provider => !legacyDefaultIds.has(provider.id)
+		);
+		const hasAnyProviderKey = this.settings.providers.some(
+			provider => provider.apiKey && provider.apiKey.trim().length > 0
+		);
+
+		if (
+			this.settings.providers.length > 1 &&
+			!hasCustomProviders &&
+			!hasAnyProviderKey
+		) {
+			this.settings.providers = DEFAULT_SETTINGS.providers.map(provider => ({ ...provider }));
+			this.settings.models = this.settings.models.filter(model => model.providerId === "gemini");
+			if (!this.settings.models.length) {
+				this.settings.models = DEFAULT_SETTINGS.models.map(model => ({ ...model }));
+			}
+			this.settings.activeProvider = DEFAULT_SETTINGS.activeProvider;
+			this.settings.apiModel = DEFAULT_SETTINGS.apiModel;
+		}
+	
+		// Ensure default providers are present and have default base URLs
+		DEFAULT_SETTINGS.providers.forEach(defaultProvider => {
+			const existing = this.settings.providers.find(p => p.id === defaultProvider.id);
+			if (!existing) {
+				this.settings.providers.push({ ...defaultProvider });
+				return;
+			}
+
+			if (!existing.baseUrl || existing.baseUrl.trim().length === 0) {
+				existing.baseUrl = defaultProvider.baseUrl;
+			}
+		});
+	
+		// Ensure default models are present
+		DEFAULT_SETTINGS.models.forEach(defaultModel => {
+			if (!this.settings.models.find(m => m.id === defaultModel.id)) {
+				this.settings.models.push(defaultModel);
+			}
+		});
+	
+		// Ensure there's an active provider
+		if (!this.settings.activeProvider) {
+			this.settings.activeProvider = DEFAULT_SETTINGS.activeProvider;
+		}
+
+		const ensureNamingModelSelection = (providerId: string, modelId: string) => {
+			const resolvedProviderId = this.settings.providers.some(
+				provider => provider.id === providerId
+			)
+				? providerId
+				: this.settings.activeProvider;
+
+			const enabledModels = this.settings.models.filter(
+				model => model.providerId === resolvedProviderId && model.enabled
+			);
+			const resolvedModelId = enabledModels.some(model => model.id === modelId)
+				? modelId
+				: enabledModels[0]?.id || this.settings.apiModel;
+
+			return { providerId: resolvedProviderId, modelId: resolvedModelId };
+		};
+
+		const cardSelection = ensureNamingModelSelection(
+			this.settings.cardTitleProviderId,
+			this.settings.cardTitleModelId
+		);
+		this.settings.cardTitleProviderId = cardSelection.providerId;
+		this.settings.cardTitleModelId = cardSelection.modelId;
+
+		const groupSelection = ensureNamingModelSelection(
+			this.settings.groupTitleProviderId,
+			this.settings.groupTitleModelId
+		);
+		this.settings.groupTitleProviderId = groupSelection.providerId;
+		this.settings.groupTitleModelId = groupSelection.modelId;
+
+		if (
+			this.settings.imageProviderId &&
+			!this.settings.providers.some(
+				provider => provider.id === this.settings.imageProviderId
+			)
+		) {
+			this.settings.imageProviderId = "";
+		}
+
+		if (this.settings.imageModelId) {
+			const resolvedProviderId =
+				this.settings.imageProviderId || this.settings.activeProvider;
+			const enabledImageModels = this.settings.models.filter(
+				model => model.providerId === resolvedProviderId && model.enabled
+			);
+			if (!enabledImageModels.some(model => model.id === this.settings.imageModelId)) {
+				this.settings.imageModelId = "";
+			}
+		}
+
+		// Ensure observability settings exist (upgrade from pre-0.2.0)
+		if (!this.settings.observability) {
+			this.settings.observability = {
+				provider: "none",
+				host: "",
+				publicKey: "",
+				secretKey: "",
+				enabled: false,
+			};
+		}
+
+		// Ensure models have new optional fields
+		for (const model of this.settings.models) {
+			if (model.maxRetries === undefined) model.maxRetries = 2;
+		}
+
+		if (htmlPreviewSettingsMigrated) {
+			await this.saveSettings();
+		}
+	}
+
+	patchCanvasMenu() {
+		const app = this.app;
+		const settings = this.settings;
+		const resolveConfiguredImageProvider = () => {
+			const providerId = settings.imageProviderId || settings.activeProvider;
+			const provider =
+				settings.providers.find((p) => p.id === providerId) ||
+				settings.providers.find((p) => p.id === settings.activeProvider);
+			if (!provider) return null;
+			const id = provider.id?.toLowerCase() || "";
+			const type = provider.type?.toLowerCase() || "";
+			const isGeminiFamily =
+				id === "gemini" || id === "google" || type === "gemini" || type === "google";
+			return { provider, isGeminiFamily };
+		};
+		const resolveConfiguredImageModel = () =>
+			settings.models.find((m) => m.id === settings.imageModelId)?.model ||
+			settings.imageModelId;
+		const describeImageTarget = () => {
+			const target = resolveConfiguredImageProvider();
+			if (!target) return "Generate image";
+			const model =
+				resolveConfiguredImageModel() ||
+				(target.isGeminiFamily ? "nano-banana-pro-preview" : target.provider.type);
+			return `Generate image (${model.replace(/^models\//i, "")})`;
+		};
+
+		const patchMenu = () => {
+			const canvasView = findCanvasMenuHost(
+				this.app.workspace.getLeavesOfType("canvas")
+			);
+			if (!canvasView) return false;
+
+			const menu = (canvasView as any).canvas.menu;
+			const selection = menu.selection;
+
+			const menuUninstaller = around(menu.constructor.prototype, {
+				render: (next: any) =>
+					function (...args: any) {
+						const result = next.call(this, ...args);
+
+						// * If multi selection
+						const maybeCanvasView =
+							app.workspace.getActiveViewOfType(
+								ItemView
+							) as CanvasView | null;
+						if (
+							!maybeCanvasView ||
+							maybeCanvasView.canvas?.selection?.size !== 1
+						)
+							return result;
+
+						// // * If group
+						// if (node.unknownData.type === "group") return result;
+
+						this.menuEl
+							.querySelectorAll(".ai-menu-item")
+							.forEach((el: Element) => el.remove());
+
+						// * If Edge
+						const selectedNode = Array.from(
+							maybeCanvasView.canvas?.selection
+						)[0];
+						if (
+							// @ts-expect-error
+							selectedNode.from
+						) {
+							if (!selectedNode.unknownData.isGenerated) return;
+							addRegenerateResponse(app, settings, this.menuEl);
+						} else {
+							// * Handles "Call AI" button
+
+							addAskAIButton(app, settings, this.menuEl);
+
+							// * Handles "Ask AI with Model Selection" button
+							addAskAIWithModelButton(app, settings, this.menuEl);
+
+							// const node = <CanvasNode>(
+							// 	Array.from(this.canvas.selection)?.first()
+							// );
+
+
+							// * Handles "Ask Question" button
+							// TODO: refactor (as above)
+
+							const buttonEl_AskQuestion = createEl(
+								"button",
+								"clickable-icon ai-menu-item"
+							);
+							setTooltip(
+								buttonEl_AskQuestion,
+								"Ask question with AI",
+								{
+									placement: "top",
+								}
+							);
+							setIcon(buttonEl_AskQuestion, "lucide-help-circle");
+							this.menuEl.appendChild(buttonEl_AskQuestion);
+							buttonEl_AskQuestion.addEventListener(
+								"click",
+								() => {
+									let modal = new CustomQuestionModal(
+										app,
+										(question2: string) => {
+											handleCallAI_Question(
+												app,
+												settings,
+												<CanvasNode>(
+													Array.from(
+														this.canvas.selection
+													)?.first()!
+												),
+												question2
+											);
+											// Handle the input
+										}
+									);
+									modal.open();
+								}
+							);
+
+							// * Handles "Ask Question with Model Selection" button
+							addAskQuestionWithModelButton(app, settings, this.menuEl);
+
+							const buttonEl_GenerateImage = createEl(
+								"button",
+								"clickable-icon ai-menu-item"
+							);
+							setTooltip(buttonEl_GenerateImage, describeImageTarget(), {
+								placement: "top",
+							});
+							setIcon(buttonEl_GenerateImage, "lucide-image");
+							this.menuEl.appendChild(buttonEl_GenerateImage);
+							buttonEl_GenerateImage.addEventListener("click", () => {
+								const target = resolveConfiguredImageProvider();
+								if (!target) {
+									new Notice("No image provider configured. Set one in Image Generation settings.");
+									return;
+								}
+								const isAzureImageProvider =
+									target.provider.type === "Azure";
+								if (target.isGeminiFamily || isAzureImageProvider) {
+									// Gemini and Azure keep the context-aware flow:
+									// ancestor notes and images feed the prompt via
+									// noteGenerator (Azure sends them as reference
+									// images on the edits endpoint).
+									const modelId =
+										resolveConfiguredImageModel() ||
+										(target.isGeminiFamily
+											? "nano-banana-pro-preview"
+											: "gpt-image-2");
+									const imageModel = {
+										id: modelId,
+										providerId: target.provider.id,
+										model: modelId,
+										enabled: true,
+									};
+									const { generateNote } = noteGenerator(
+										app,
+										settings,
+										selectedNode as unknown as CanvasNode,
+										undefined,
+										target.provider,
+										imageModel
+									);
+									void generateNote();
+									return;
+								}
+								void handleGenerateImage(
+									app,
+									settings,
+									selectedNode as unknown as CanvasNode
+								);
+							});
+
+							const nodeType =
+								// @ts-expect-error
+								selectedNode?.getData?.()?.type ||
+								selectedNode?.unknownData?.type;
+
+							// * Handles AI naming buttons
+							if (nodeType === "group") {
+								addGenerateGroupNameButton(app, settings, this.menuEl);
+							} else {
+								addGenerateCardTitleButton(app, settings, this.menuEl);
+							}
+
+						}
+						return result;
+					},
+			});
+
+			this.register(menuUninstaller);
+			this.app.workspace.trigger("collapse-node:patched-canvas");
+
+			return true;
+		};
+
+		this.app.workspace.onLayoutReady(() => {
+			if (patchMenu()) return;
+
+			// No canvas is loaded yet. Retry on both events, because a deferred
+			// canvas tab wakes up on activation and does not always announce
+			// itself through layout-change alone.
+			const retryEvents = ["layout-change", "active-leaf-change"] as const;
+			const refs = retryEvents.map(name =>
+				this.app.workspace.on(name as any, () => {
+					if (!patchMenu()) return;
+					refs.forEach(ref => this.app.workspace.offref(ref));
+				})
+			);
+			refs.forEach(ref => this.registerEvent(ref));
+		});
+	}
+
+	async fetchSystemPrompts() {
+		// const response = await fetch(
+		// 	"https://raw.githubusercontent.com/f/awesome-ai-prompts/main/prompts.csv"
+		// );
+		// const text = await response.text();
+		const parsedCsv = parseCsv(promptsCsvText);
+		// logDebug({ parsedCsv });
+
+		const systemPrompts: SystemPrompt[] = parsedCsv
+			.slice(1)
+			.map((value: string[], index: number) => ({
+				id: index,
+				act: value[0],
+				prompt: value[1],
+			}));
+		// logDebug({ systemPrompts });
+
+		this.settings.systemPrompts = systemPrompts;
+
+		this.saveSettings();
+	}
+
+	patchNoteContextMenu() {
+		const settings = this.settings;
+		const resolveGeminiProvider = () =>
+			settings.providers.find((provider) => {
+				const id = provider.id?.toLowerCase() || "";
+				const type = provider.type?.toLowerCase() || "";
+				return id === "gemini" || id === "google" || type === "gemini" || type === "google";
+			});
+		const createNanoBananaModel = (providerId: string) => ({
+			id: "nano-banana-pro-preview",
+			providerId: providerId,
+			model: "nano-banana-pro-preview",
+			enabled: true,
+		});
+		// * no event name to add to Canvas context menu ("canvas-menu" does not exist)
+		this.registerEvent(
+			this.app.workspace.on("canvas:node-menu", (menu, node) => {
+				const imagePrompt = getImageGenerationPrompt(
+					(node as unknown as CanvasNode).getData() as Record<string, unknown>
+				);
+				menu.addSeparator();
+				if (imagePrompt) {
+					menu.addItem((item) => {
+						item.setTitle("View image prompt")
+							.setIcon("lucide-file-text")
+							.onClick(() => {
+								const modal = new Modal(this.app);
+								modal.setTitle("Image generation prompt");
+								modal.contentEl.addClass("image-generation-prompt-modal");
+								modal.contentEl.createEl("p", {
+									text: "Exact text sent to the image API for this card.",
+									cls: "image-generation-prompt-description",
+								});
+
+								const promptEl = modal.contentEl.createEl("textarea", {
+									cls: "image-generation-prompt-text",
+								});
+								promptEl.value = imagePrompt;
+								promptEl.readOnly = true;
+								promptEl.spellcheck = false;
+								promptEl.setAttribute("aria-label", "Image generation prompt");
+
+								const actionsEl = modal.contentEl.createDiv({
+									cls: "image-generation-prompt-actions",
+								});
+								const closeButton = actionsEl.createEl("button", { text: "Close" });
+								closeButton.addEventListener("click", () => modal.close());
+								const copyButton = actionsEl.createEl("button", {
+									text: "Copy prompt",
+									cls: "mod-cta",
+								});
+								copyButton.addEventListener("click", async () => {
+									try {
+										await navigator.clipboard.writeText(imagePrompt);
+										new Notice("Image prompt copied to clipboard");
+									} catch {
+										new Notice("Could not copy the image prompt");
+									}
+								});
+								modal.open();
+							});
+					});
+				}
+				menu.addItem((item) => {
+					item.setTitle("Ask AI with chosen context…")
+						.setIcon("lucide-list-filter")
+						.onClick(() => {
+							const { generateNote } = noteGenerator(this.app, settings, node as unknown as CanvasNode);
+							return generateNote(undefined, undefined, true);
+						});
+				});
+				menu.addItem((item) => {
+					item.setTitle("Copy node ID")
+						.setIcon("lucide-copy")
+						.onClick(() => {
+							navigator.clipboard.writeText(node.id);
+							new Notice("Node ID copied to clipboard");
+						});
+				});
+				menu.addItem((item) => {
+					item.setTitle("Generate image")
+						.setIcon("lucide-image")
+						.onClick(() => {
+							handleGenerateImage(this.app, settings);
+						});
+				});
+				menu.addItem((item) => {
+					item.setTitle("Generate image (NanoBanana)")
+						.setIcon("lucide-image")
+						.onClick(() => {
+							const geminiProvider = resolveGeminiProvider();
+							if (!geminiProvider) {
+								new Notice("No Gemini provider configured for NanoBanana.");
+								return;
+							}
+							const nanoModel = createNanoBananaModel(geminiProvider.id);
+							const { generateNote } = noteGenerator(
+								this.app,
+								settings,
+								undefined,
+								undefined,
+								geminiProvider,
+								nanoModel
+							);
+							void generateNote();
+						});
+				});
+			})
+		);
+	}
+
+	patchCanvasSelectionMenu() {
+		const app = this.app;
+		const settings = this.settings;
+		const resolveSourceNode = (canvas: Canvas) => {
+			const selection = Array.from(canvas.selection.values());
+			if (selection.length === 1) {
+				const selected = selection[0] as any;
+				if (selected?.from?.node) {
+					return selected.from.node as CanvasNode;
+				}
+				return selected as CanvasNode;
+			}
+			const target = canvas.nodeInteractionLayer?.target as CanvasNode | null;
+			return target ?? null;
+		};
+
+		this.registerEvent(
+			this.app.workspace.on("canvas:selection-menu", (menu, canvas) => {
+				menu.addSeparator();
+				menu.addItem((item) => {
+					item.setTitle("Generate image")
+						.setIcon("lucide-image")
+						.onClick(() => {
+							const sourceNode = resolveSourceNode(canvas);
+							if (!sourceNode) {
+								new Notice("Select a card to generate an image from.");
+								return;
+							}
+
+							const modal = new InputModal(
+								app,
+								{
+									label: "Image prompt (optional)",
+									buttonLabel: "Generate image",
+								},
+								(prompt: string) => {
+									const trimmedPrompt = prompt.trim();
+									void handleGenerateImage(app, settings, sourceNode, {
+										prompt: trimmedPrompt || undefined,
+										edgeLabel: trimmedPrompt || undefined,
+									});
+								}
+							);
+							modal.open();
+						});
+				});
+			})
+		);
+	}
+
+	addCommands() {
+		const app = this.app;
+
+		// * Website to MD
+		// this.addCommand({
+		// 	id: "insert-website-content",
+		// 	name: "Insert the content of a website as markdown",
+		// 	checkCallback: (checking: boolean) => {
+		// 		if (checking) {
+		// 			// logDebug({ checkCallback: checking });
+		// 			if (!getActiveCanvas(app)) return false;
+
+		// 			return true;
+		// 		}
+
+		// 		new InputModal(
+		// 			app,
+		// 			{
+		// 				label: "Enter a website url",
+		// 				buttonLabel: "Get website content",
+		// 			},
+		// 			(videoUrl: string) => {
+		// 				new Notice(`Scraping website content`);
+
+		// 				insertWebsiteContent(app, this.settings, videoUrl);
+		// 			}
+		// 		).open();
+		// 	},
+		// 	// callback: () => {},
+		// });
+
+		// * Youtube captions
+		// this.addCommand({
+		// 	id: "insert-youtube-caption",
+		// 	name: "Insert captions of a Youtube video",
+		// 	checkCallback: (checking: boolean) => {
+		// 		if (checking) {
+		// 			// logDebug({ checkCallback: checking });
+		// 			if (!getActiveCanvas(app)) return false;
+
+		// 			return true;
+		// 		}
+
+		// 		new InputModal(
+		// 			app,
+		// 			{
+		// 				label: "Enter a youtube url",
+		// 				buttonLabel: "Scrape captions",
+		// 			},
+		// 			(videoUrl: string) => {
+		// 				new Notice(`Scraping captions of youtube video`);
+
+		// 				runYoutubeCaptions(app, this.settings, videoUrl);
+		// 			}
+		// 		).open();
+		// 	},
+		// 	// callback: () => {},
+		// });
+
+		this.addCommand({
+			id: "run-prompt-folder",
+			name: "Run a system prompt on a folder",
+			checkCallback: (checking: boolean) => {
+				if (checking) {
+					// logDebug({ checkCallback: checking });
+					if (!getActiveCanvas(app)) return false;
+
+					return true;
+				}
+
+				new SystemPromptsModal(
+					app,
+					this.settings,
+					(systemPrompt: SystemPrompt) => {
+						new Notice(
+							`Selected system prompt ${systemPrompt.act}`
+						);
+
+						new FolderSuggestModal(app, (folder: TFolder) => {
+							// new Notice(`Selected folder ${folder.path}`);
+							runPromptFolder(
+								app,
+								this.settings,
+								systemPrompt,
+								folder
+							);
+						}).open();
+					}
+				).open();
+			},
+			// callback: () => {},
+		});
+
+		this.addCommand({
+			id: "insert-system-prompt",
+			name: "Insert system prompt",
+			checkCallback: (checking: boolean) => {
+				if (checking) {
+					// logDebug({ checkCallback: checking });
+					if (!getActiveCanvas(app)) return false;
+
+					return true;
+				}
+
+				new SystemPromptsModal(
+					app,
+					this.settings,
+					(systemPrompt: SystemPrompt) =>
+						insertSystemPrompt(app, systemPrompt)
+				).open();
+			},
+			// callback: () => {},
+		});
+
+		this.addCommand({
+			id: "insert-relevant-questions",
+			name: "Insert relevant questions",
+			checkCallback: (checking: boolean) => {
+				if (checking) {
+					// logDebug({ checkCallback: checking });
+					if (!getActiveCanvas(app)) return false;
+					return true;
+				}
+
+				// new SystemPromptsModal(this.app, this.settings).open();
+				handleAddRelevantQuestions(app, this.settings);
+			},
+			// callback: async () => {},
+		});
+	}
+
+	async saveSettings() {
+		await this.saveData(this.settings);
+	}
+}
