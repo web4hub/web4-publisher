@@ -5,7 +5,7 @@ export async function githubRequest(path) {
   const response = await fetch(`${API}${path}`, {
     headers: {
       Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
+      "X-GitHub-Api-Version": "2026-09-17",
       "User-Agent": "web4-publisher"
     }
   });
