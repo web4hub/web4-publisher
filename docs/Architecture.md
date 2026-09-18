@@ -1,3 +1,4 @@
+```python3
 import os
 import zipfile
 from pathlib import Path
@@ -816,3 +817,145 @@ main()
 
 This version fixes the broken `__dirname`/`resolve()` fragments, makes the SCSS structure coherent, automatically discovers Markdown posts, and generates both the project directory and `vite-mastodon-theme-blog.zip`.
 One important distinction: despite the original name, this is currently a **Mastodon-compatible blog foundation**, not yet a Mastodon publisher. The next layer would be the actual publication pipeline: Markdown → rendered article → RSS/Atom → Mastodon API → optional Web4/decentralized artifact.
+```
+I can make `next.pdf` fit the repository by treating it as **source content for the Web4 publishing pipeline**, rather than leaving it as an unrelated binary at the root.
+
+### What I found
+
+Your repository is a Vite-based Markdown/MDX publisher with:
+
+- Markdown posts under `posts/`
+- Content validation
+- Vite static builds
+- Multiple SCSS themes
+- GitHub Pages deployment
+- Existing `next.pdf` and `next.gdoc` files
+- A generated-looking `upload-pages-artifact...tar.gz` file and extracted directory
+
+The PDF is currently **not referenced by the application**, so visitors will not see it unless they know its direct URL.
+
+### Recommended integration
+
+#### 1. Convert the PDF’s content into a Markdown post
+
+Add something like:
+
+```text
+posts/next.md
+```
+
+Then the existing Markdown importer can publish it automatically as a normal article.
+
+This is the best option if `next.pdf` contains writing, plans, architecture, or documentation that should become part of the site.
+
+#### 2. Keep the PDF as a downloadable source document
+
+Move it to a clearer location:
+
+```text
+public/documents/next.pdf
+```
+
+Then add a link from the generated post:
+
+```markdown
+[Download the original PDF](/documents/next.pdf)
+```
+
+That preserves the original document while giving the site a web-friendly version.
+
+#### 3. Add document metadata
+
+The Markdown version should use front matter compatible with your repository’s content model, for example:
+
+```markdown
+---
+title: "Next"
+description: "Source document for the next stage of Web4 Publisher."
+date: "2026-09-18"
+type: "document"
+source: "/documents/next.pdf"
+---
+
+# Next
+
+Document content goes here.
+```
+
+I would first inspect the schemas and validation scripts to use the exact field names your repository expects.
+
+#### 4. Add a document or source link to the site
+
+The application could display:
+
+- Article title
+- Summary
+- Publication date
+- Download-original-PDF link
+- Source/provenance information
+- Optional content hash
+
+That would align the PDF with the repository’s planned pipeline:
+
+```text
+Write → Parse → Validate → Render → Hash → Sign → Publish → Verify
+```
+
+#### 5. Generate a content hash
+
+Because your project is intended to become a Web4 publishing engine, the PDF can be registered as an immutable source artifact:
+
+```text
+next.pdf
+  ↓
+SHA-256 hash
+  ↓
+metadata
+  ↓
+published Markdown representation
+```
+
+The post could include the source hash so readers can verify that the published content corresponds to the original file.
+
+### Files I would likely change
+
+Depending on the desired result:
+
+```text
+posts/next.md
+public/documents/next.pdf
+src/main.jsx
+scripts/validate-content.js
+schemas/...
+README.md
+```
+
+The most important change would be `posts/next.md`; your application already loads Markdown posts automatically.
+
+### Repository cleanup
+
+I would also review these files:
+
+- `next.gdoc` — it appears to contain the same PDF data as `next.pdf`, despite the misleading `.gdoc` extension.
+- `upload-pages-artifact-...tar.gz`
+- `upload-pages-artifact-.../`
+
+Those appear to be GitHub Pages deployment artifacts accidentally committed into the project. They generally should not be part of the source repository. They can be removed and replaced with a proper GitHub Actions workflow reference such as:
+
+```yaml
+uses: actions/upload-pages-artifact@v3
+```
+
+### Best overall approach
+
+I recommend:
+
+1. Extract the PDF’s readable text.
+2. Convert it into `posts/next.md`.
+3. Move the original PDF to `public/documents/next.pdf`.
+4. Add front matter and a download link.
+5. Add source hash/provenance metadata.
+6. Remove the committed Pages artifact archive and extracted directory.
+7. Run `npm run validate`, `npm test`, and `npm run build`.
+
+This would make the PDF an actual published document in `web4-publisher`, rather than an unconnected binary sitting beside the application source.
