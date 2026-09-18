@@ -22,11 +22,9 @@ jobs:
           npm run build
 
       - name: Upload Pages artifact
-        id: upload
-        uses: web4hub/web4-publisher/actions/gh-pages@main
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
-          name: github-pages
 
   deploy:
     needs: build
