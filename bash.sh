@@ -7,3 +7,6 @@ git push origin web4hub-patch-1
 git clone https://github.com/web4hub/web4-publisher.git
 cd web4-publisher
 find . -maxdepth 3 -type f | sort
+npm install --package-lock-only
+git add package-lock.json
+git commit -m "Add npm lockfile"
