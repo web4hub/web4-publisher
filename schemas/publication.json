@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://web4hub.org/schemas/publication.json",
+  "title": "Web4 Publication",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "id",
+    "content",
+    "provenance"
+  ],
+  "properties": {
+    "type": {
+      "const": "web4:Publication"
+    },
+    "id": {
+      "type": "string",
+      "format": "uri"
+    },
+    "content": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "slug",
+        "description",
+        "body"
+      ],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "slug": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "body": { "type": "string" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    }
+  }
+}

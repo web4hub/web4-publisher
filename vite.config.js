@@ -24,7 +24,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
+        main: resolve(__dirname, 'src/browsers.liquid/index.html'),
         'theme-default': resolve(
           __dirname,
           'src/styles/reset.scss'

@@ -1,0 +1,13 @@
+{
+  "type": "web4:Publication",
+  "id": "https://web4hub.org/publications/web4-hello-world-npm",
+  "content": {
+    "title": "Hello, Web4 from npm",
+    "slug": "web4-hello-world-npm",
+    "description": "A Web4 publication containing a small reusable npm-style module.",
+    "body": "# Hello, Web4 from npm\n\nInstall the package and call `greet()` to generate a greeting.\n\n```js\nexport function greet(name = \"world\") {\n  if (typeof name !== \"string\" || name.trim() === \"\") {\n    throw new TypeError(\"name must be a non-empty string\");\n  }\n\n  return `Hello, ${name.trim()}!`;\n}\n```\n\n## Usage\n\n```js\nimport { greet } from \"@web4hub/hello-world\";\n\nconsole.log(greet(\"Web4\"));\n```"
+  },
+  "provenance": {
+    "source": "https://www.npmjs.com/package/@web4hub/hello-world"
+  }
+}

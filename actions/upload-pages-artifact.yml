@@ -1,0 +1,66 @@
+name: "Upload static site artifact"
+description: "Archive a static site directory and upload it as a GitHub Pages artifact"
+author: "Web4Hub"
+
+inputs:
+  path:
+    description: "Directory containing the built static site"
+    required: false
+    default: "dist"
+  name:
+    description: "Artifact name"
+    required: false
+    default: "github-pages"
+  retention-days:
+    description: "How many days to keep the artifact"
+    required: false
+    default: "1"
+
+outputs:
+  artifact_id:
+    description: "The ID of the uploaded artifact"
+    value: ${{ steps.upload.outputs.artifact-id }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Validate input path
+      shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+      run: |
+        if [ ! -d "$INPUT_PATH" ]; then
+          echo "::error::Artifact directory '$INPUT_PATH' does not exist."
+          exit 1
+        fi
+
+    - name: Archive static site
+      shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        ARTIFACT_PATH: ${{ runner.temp }}/artifact.tar
+      run: |
+        tar \
+          --dereference \
+          --hard-dereference \
+          --directory "$INPUT_PATH" \
+          --exclude=.git \
+          --exclude=.github \
+          -cf "$ARTIFACT_PATH" \
+          .
+
+    - name: Upload artifact
+      id: upload
+      shell: bash
+      env:
+        ARTIFACT_NAME: ${{ inputs.name }}
+        RETENTION_DAYS: ${{ inputs.retention-days }}
+      run: |
+        echo "Uploading artifact: $ARTIFACT_NAME"
+        echo "artifact-id=$(gh api \
+          -X POST \
+          repos/${GITHUB_REPOSITORY}/actions/artifacts \
+          -f name=\"$ARTIFACT_NAME\" \
+          -f expiration_days=\"$RETENTION_DAYS\" \
+          -f archive_format=tar \
+          --jq '.id' 2>/dev/null || echo '')" >> "$GITHUB_OUTPUT"

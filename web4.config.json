@@ -1,0 +1,23 @@
+{
+  "$schema": "./schemas/web4.config.schema.json",
+  "version": 1,
+  "site": {
+    "name": "Web4 Publisher",
+    "description": "Semantic-first static publishing for Markdown and MDX.",
+    "url": "https://web4hub.github.io/web4-publisher",
+    "language": "en"
+  },
+  "content": {
+    "directory": "posts",
+    "extensions": [".md", ".mdx"],
+    "schema": "schemas/post.schema.json"
+  },
+  "build": {
+    "outputDirectory": "dist",
+    "clean": true
+  },
+  "themes": {
+    "default": "default",
+    "available": ["default", "glitch", "win95"]
+  }
+}

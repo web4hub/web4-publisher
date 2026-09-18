@@ -1,0 +1,13 @@
+{
+  "type": "web4:Publication",
+  "id": "https://web4hub.org/publications/web4-hello-world",
+  "content": {
+    "title": "Hello, Web4",
+    "slug": "web4-hello-world",
+    "description": "A minimal Web4 publication example.",
+    "body": "# Hello, Web4\n\nThis publication demonstrates the smallest valid Web4 document.\n\n```js\nexport function greet(name = \"world\") {\n  return `Hello, ${name}!`;\n}\n```"
+  },
+  "provenance": {
+    "source": "https://github.com/web4hub/web4-publisher/blob/main/examples/web4-hello-world.json"
+  }
+}
