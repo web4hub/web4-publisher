@@ -16,7 +16,7 @@ It provides:
 
 ## Architecture
 
-```md
+```bash
 Markdown / MDX
       ↓
 Parse
