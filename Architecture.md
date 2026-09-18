@@ -2,16 +2,22 @@
 
 ## 1. Purpose
 
-Web4 Publisher is a source-aware publication engine for external digital resources. It converts provider metadata into a canonical, deterministic, and cryptographically identifiable Web4 publication model without depending on blockchain infrastructure.
+Web4 Publisher is a source-aware publication engine for external digital resources. It fetches provider metadata, normalizes it into a canonical Web4 resource model, validates it, canonicalizes it, computes a deterministic content hash, and emits a publication manifest.
 
-The system exists to answer a simple question:
+The system is designed to answer four questions:
 
-- What resource did a provider describe?
-- What normalized representation did we derive from it?
+- What source did we observe?
+- What normalized representation did we derive?
 - What content identity does that representation have?
-- What publication manifest did the publisher generate?
+- What publication artifact did the publisher generate?
 
-The design intentionally separates source data, resource identity, normalized content, content identity, and publication output.
+This design intentionally separates:
+
+- source data
+- resource identity
+- normalized content
+- content identity
+- publication output
 
 ## 2. Core invariant
 
@@ -21,32 +27,32 @@ SOURCE != IDENTITY != CONTENT != PUBLICATION
 
 More precisely:
 
-- Source: raw provider data such as a GitHub repository payload
-- Identity: a stable source identity such as `github:Codertocat/hello-world-npm`
-- Normalized content: the canonical Web4 Repository representation
-- Content identity: `sha256:<digest>` of the normalized representation
-- Publication: the manifest emitted by the publisher
+- Source: the raw response from an upstream provider, such as GitHub
+- Identity: a stable source identifier such as `github:Codertocat/hello-world-npm`
+- Normalized content: a canonical Web4 Repository representation
+- Content identity: `sha256:<digest>` derived from the normalized representation
+- Publication: the Web4 manifest emitted by the publisher
 
-This separation is the foundation of the architecture.
+This separation is the foundation of the system.
 
-## 3. System goals
+## 3. Goals
 
 The initial v1.0 implementation must:
 
-1. Query public GitHub user repositories.
-2. Query an individual repository.
-3. Normalize GitHub repository metadata into the Web4 Repository schema.
-4. Validate the normalized resource.
-5. Produce deterministic canonical JSON.
-6. Produce a stable SHA-256 content hash.
-7. Generate a Web4 manifest.
-8. Persist the manifest locally.
-9. Retrieve the manifest.
-10. Verify the manifest.
-11. Expose the functionality through an HTTP API.
-12. Operate without blockchain infrastructure.
-13. Keep provider-specific logic isolated from the core pipeline.
-14. Never execute repository code or untrusted content during ingestion.
+1. Query public GitHub user repositories
+2. Query an individual GitHub repository
+3. Map GitHub metadata into the Web4 Repository schema
+4. Validate the normalized resource
+5. Produce deterministic canonical JSON
+6. Produce a stable SHA-256 content hash
+7. Generate a Web4 manifest
+8. Persist the manifest locally
+9. Retrieve the manifest
+10. Verify the manifest
+11. Expose the pipeline through an HTTP API
+12. Operate without blockchain infrastructure
+13. Keep provider-specific logic isolated from the Web4 core
+14. Never execute repository code or untrusted content during ingestion
 
 ## 4. Non-goals
 
@@ -58,9 +64,9 @@ v1.0 does not include:
 - trusting arbitrary URLs as executable content
 - storing access tokens in manifests
 - blockchain registration as part of the core publication pipeline
-- provider-specific logic embedded in the Web4 core
+- mixing provider-specific logic into the Web4 core
 
-These are explicitly future capabilities or separate concerns.
+These are either future capabilities or separate concerns.
 
 ## 5. High-level architecture
 
@@ -84,23 +90,23 @@ Manifest
   ↓
 Publish
 
-The Web4 core is responsible for canonicalization, validation, hashing, identity, and manifest creation. Provider adapters are responsible for fetching and mapping provider-specific data into a common normalized model.
+The Web4 core is responsible for validation, canonicalization, hashing, identity definition, and manifest creation. Provider adapters are responsible for fetching and mapping upstream data into a normalized form.
 
 ## 6. Layered design
 
 ### 6.1 Source layer
 
-The source layer represents the upstream data provider. The first implementation supports GitHub.
+The source layer contains upstream providers. The first implementation supports GitHub.
 
 Responsibilities:
 
-- fetch external metadata
-- provide provider-specific objects
-- isolate provider APIs from the core pipeline
+- fetch raw metadata from external providers
+- return provider-specific objects
+- isolate upstream APIs from the core system
 
 ### 6.2 Adapter layer
 
-Each provider implements a small adapter interface. The adapter converts raw data into the normalized structure expected by the core.
+Each provider implements a minimal adapter interface. The adapter converts raw provider output into the resource model expected by the core.
 
 ```js
 export class SourceAdapter {
@@ -118,36 +124,36 @@ export class SourceAdapter {
 }
 ```
 
-This keeps the core independent of GitHub, GitLab, npm, PyPI, HTTP, or other providers.
+This keeps the Web4 core independent of the provider implementation.
 
 ### 6.3 Core layer
 
-The core layer defines the rules that make a publication trustworthy and deterministic.
+The core layer defines the deterministic and trust-preserving rules for publication.
 
 Responsibilities:
 
 - normalize provider output into canonical resource structures
 - validate schema conformance
 - canonicalize values in a deterministic order
-- compute stable SHA-256 digests
-- create manifests
-- verify published content against the expected hash
+- compute stable SHA-256 hashes
+- create publication manifests
+- verify published content against stored expectations
 
 ### 6.4 Publication layer
 
-The publication layer stores or serves the output generated by the core.
+The publication layer stores or serves the final output from the core.
 
 Supported in v1.0:
 
-- local filesystem
+- local filesystem publication
 
-Future support can extend to:
+Future support can include:
 
 - HTTP publication
 - IPFS
-- registry updates
+- registry publication
 - Web4Asset registration
-- Ethereum or other blockchain registration
+- blockchain registration
 
 ## 7. GitHub as the first provider
 
@@ -166,11 +172,11 @@ GET /users/{username}/repos
 GET /repos/{owner}/{repo}
 ```
 
-The implementation must treat the upstream GitHub response as untrusted input. It must not execute repository code, render README content, or trust arbitrary metadata as instructions.
+The implementation must treat upstream GitHub responses as untrusted input. It must not execute repository code, render repository content as instructions, or trust arbitrary metadata as commands.
 
-## 8. Provider adapter contract
+## 8. Adapter contract
 
-GitHub-specific logic is isolated in the adapter package.
+GitHub-specific logic is implemented in the adapter package and kept separate from the Web4 core.
 
 ```js
 // src/github/client.js
@@ -205,7 +211,7 @@ export async function getRepository(owner, repo) {
 
 ## 9. Normalized resource model
 
-The raw GitHub payload is intentionally reduced into a small canonical structure. The normalized resource includes five principal domains:
+The raw GitHub payload is reduced to a compact canonical structure. The normalized resource includes five principal domains:
 
 - identity
 - source
@@ -260,35 +266,33 @@ Example:
 
 ## 10. GitHub field mapping
 
-The GitHub object is mapped to the canonical Web4 model as follows:
+The GitHub object is mapped into the canonical Web4 model as follows:
 
-| GitHub field | Web4 field |
-| --- | --- |
-| `id` | `provenance.repository_id` |
-| `node_id` | `provenance.node_id` |
-| `owner.login` | `identity.owner` |
-| `name` | `identity.name` |
-| `full_name` | `identity.canonical` |
-| `html_url` | `source.url` |
-| `url` | `source.api` |
-| `clone_url` | `source.clone` |
-| `ssh_url` | `source.ssh` |
-| `description` | `content.description` |
-| `language` | `content.language` |
-| `default_branch` | `content.default_branch` |
-| `visibility` | `status.visibility` |
-| `fork` | `status.fork` |
-| `archived` | `status.archived` |
-| `disabled` | `status.disabled` |
-| `stargazers_count` | `metrics.stars` |
-| `forks_count` | `metrics.forks` |
-| `watchers_count` | `metrics.watchers` |
-| `open_issues_count` | `metrics.open_issues` |
-| `created_at` | `provenance.created_at` |
-| `updated_at` | `provenance.updated_at` |
-| `pushed_at` | `provenance.pushed_at` |
+- `id` → `provenance.repository_id`
+- `node_id` → `provenance.node_id`
+- `owner.login` → `identity.owner`
+- `name` → `identity.name`
+- `full_name` → `identity.canonical`
+- `html_url` → `source.url`
+- `url` → `source.api`
+- `clone_url` → `source.clone`
+- `ssh_url` → `source.ssh`
+- `description` → `content.description`
+- `language` → `content.language`
+- `default_branch` → `content.default_branch`
+- `visibility` → `status.visibility`
+- `fork` → `status.fork`
+- `archived` → `status.archived`
+- `disabled` → `status.disabled`
+- `stargazers_count` → `metrics.stars`
+- `forks_count` → `metrics.forks`
+- `watchers_count` → `metrics.watchers`
+- `open_issues_count` → `metrics.open_issues`
+- `created_at` → `provenance.created_at`
+- `updated_at` → `provenance.updated_at`
+- `pushed_at` → `provenance.pushed_at`
 
-The remaining fields stay in the upstream GitHub object and are available for future extensions, but they are intentionally not promoted into the canonical resource unless required by a future schema.
+Only the fields that matter to the canonical publication model are promoted into the normalized resource. The rest remain available from the upstream API for future use.
 
 ## 11. GitHub mapper
 
@@ -338,24 +342,24 @@ export function mapGitHubRepository(repo) {
 }
 ```
 
-## 12. Schema validation
+## 12. Validation
 
-Each normalized resource must validate against a JSON Schema before hashing or publication.
+Every normalized resource must validate against a JSON Schema before it is hashed or published.
 
-The repository schema enforces:
+Validation rules include:
 
 - `type` is `web4:Repository`
-- `identity` has provider, owner, name, canonical
+- `identity` contains `provider`, `owner`, `name`, and `canonical`
 - `source.url` and `source.api` are present
-- `status` includes visibility, fork, archived, disabled
-- `provenance` includes provider and repository_id
-- no extra top-level properties are allowed
+- `status` contains `visibility`, `fork`, `archived`, and `disabled`
+- `provenance` contains `provider` and `repository_id`
+- no unexpected top-level properties are allowed
 
-This keeps the normalized model stable and reduces accidental drift.
+This keeps the normalized model stable and reduces schema drift.
 
 ## 13. Canonicalization
 
-GitHub payloads are not canonicalized by hashing the raw JSON because upstream metadata can change order, add new fields, or evolve over time. The publisher hashes the normalized representation instead.
+GitHub payloads are not canonicalized by hashing the raw JSON because upstream metadata can be reordered, augmented, or modified over time. The publisher canonicalizes the normalized representation instead.
 
 ```js
 // src/core/canonicalize.js
@@ -376,7 +380,7 @@ export function canonicalize(value) {
 }
 ```
 
-This produces a deterministic representation for equivalent objects.
+This ensures equivalent objects produce the same canonical form.
 
 ## 14. Content hashing
 
@@ -394,7 +398,7 @@ export function hashResource(resource) {
 }
 ```
 
-The resulting content identity is represented as:
+The resulting content identity takes the form:
 
 ```text
 sha256:<digest>
@@ -407,7 +411,7 @@ The system distinguishes between source identity and content identity:
 - Resource identity: `github:Codertocat/hello-world-npm`
 - Content identity: `sha256:<normalized-resource-hash>`
 
-This distinction is important because the resource itself may remain the same while the normalized representation changes or a different canonicalization strategy is applied.
+This distinction is important because the source can remain constant while the normalized representation changes or the canonicalization strategy evolves.
 
 ```js
 // src/core/identity.js
@@ -421,7 +425,7 @@ export function createIdentity(resource, hash) {
 
 ## 16. Manifest model
 
-The manifest is the publication artifact. It exposes the resource identity, provider metadata, normalized content, publication metadata, and content hash.
+The manifest is the publication artifact. It contains the resource identity, normalized content, provenance, and content hash.
 
 ```js
 // src/core/manifest.js
@@ -509,16 +513,16 @@ export function publishGitHubRepository(repo) {
 The publish flow is:
 
 1. fetch raw GitHub repository payload
-2. map to Web4 resource model
+2. map it to the normalized resource model
 3. validate the normalized resource
 4. canonicalize it
-5. compute SHA-256 digest
-6. create manifest
-7. persist manifest
+5. compute the SHA-256 digest
+6. create a manifest
+7. persist or serve the manifest
 
 ## 18. Filesystem publication
 
-The initial publication target is the local filesystem. This keeps the publisher useful without imposing any blockchain requirement.
+The initial publication target is the local filesystem. This keeps publishing useful without requiring blockchain infrastructure.
 
 ```text
 publications/
@@ -530,7 +534,7 @@ publications/
             └── canonical.json
 ```
 
-This is deliberate: Web4 Publisher is not a blockchain client. It is a provenance and publication layer.
+This is intentional: Web4 Publisher is not a blockchain client. It is a provenance and publication layer.
 
 Future publication targets can include:
 
@@ -540,11 +544,11 @@ Future publication targets can include:
 - Web4Asset registration
 - Ethereum or other decentralized infrastructure
 
-## 19. API surface
+## 19. REST API
 
 The v1.0 API exposes the core publication pipeline.
 
-### 19.1 Endpoints
+### Endpoints
 
 - `GET /health`
 - `GET /discover/github/:username`
@@ -568,7 +572,7 @@ GET /publish/github/Codertocat/hello-world-npm
   → persist
 ```
 
-### 19.2 Example CLI
+### CLI
 
 ```bash
 web4-publisher discover github Codertocat
@@ -621,7 +625,7 @@ The system must not:
 - trust repository descriptions as commands
 - trust arbitrary URLs as executable resources
 - expose GitHub credentials
-- store access tokens inside manifests
+- store access tokens in manifests
 - clone repositories automatically during metadata publication
 - execute GitHub Actions as part of publication
 
@@ -639,6 +643,8 @@ Every publication should answer:
 - What hash identifies that representation?
 - Which publisher generated the manifest?
 
+Example:
+
 ```json
 {
   "provenance": {
@@ -651,7 +657,7 @@ Every publication should answer:
 }
 ```
 
-`observed_at` is generated by the publisher at ingestion time and is distinct from GitHub's `updated_at` or other upstream timestamps.
+`observed_at` is generated by the publisher at ingestion time and is distinct from GitHub’s `updated_at` or other upstream timestamps.
 
 ## 22. Verification model
 
@@ -669,7 +675,7 @@ Example verification result:
 }
 ```
 
-If the hashes do not match:
+If the hashes differ:
 
 ```json
 {
@@ -684,13 +690,13 @@ The architecture keeps three distinct version categories separate:
 
 - Publisher version: `1.0.0`
 - Manifest version: `1.0`
-- Source API version: `GitHub 2022-11-28`
+- Source API version: `GitHub REST API 2022-11-28`
 
 These must not be conflated.
 
 ## 24. Initial fixture set
 
-The initial integration fixture should include four repositories:
+The initial integration fixtures should cover four repository states:
 
 - `Codertocat/Hello-World`
 - `Codertocat/hello-world-npm`
@@ -704,7 +710,7 @@ These fixtures test:
 - different repository states
 - valid normalization across multiple examples
 
-The `hello-world-npm` fixture is the reference case because it demonstrates:
+`hello-world-npm` is the reference fixture because it demonstrates:
 
 - description
 - JavaScript language
@@ -717,7 +723,7 @@ The `hello-world-npm` fixture is the reference case because it demonstrates:
 
 ## 25. Future provider architecture
 
-The GitHub adapter is only the first implementation. The architecture is designed to support additional providers later without changing the Web4 core.
+The GitHub adapter is only the first implementation. The core is designed to support additional providers without changing the Web4 publication model.
 
 Future adapters include:
 
@@ -742,74 +748,39 @@ Web4 Core
 
 ## 26. Relationship to Web4Asset
 
-Web4 Publisher does not initially become the smart contract or blockchain asset itself. It is a publication and provenance layer.
+Web4 Publisher does not become the smart contract itself. It is a publication and provenance layer.
 
 The intended separation is:
 
 ```text
 web4-publisher
   → creates Web4 Manifest
-  → optionally registers with Web4Asset
+  → optionally registers a Web4Asset
   → optionally records on blockchain
 ```
 
 This keeps publication independent from blockchain infrastructure.
 
-A later Web4Asset registration may look like:
-
-```json
-{
-  "asset_type": "web4:Repository",
-  "resource_id": "github:Codertocat/hello-world-npm",
-  "content_hash": "sha256:...",
-  "manifest_uri": "...",
-  "publisher": "..."
-}
-```
-
-## 27. Relationship to Q-lang
-
-The publication pipeline can eventually expose semantic directives in a broader Q-lang/Web4 execution model.
-
-Example:
-
-```text
-^D publish github:Codertocat/hello-world-npm
-```
-
-This conceptually compiles to:
-
-- detect
-- analyze
-- infer
-- classify
-- register
-- validate
-- hash
-- publish
-
-This means web4-publisher can become one concrete execution service underneath a larger semantic layer without locking the project into a single runtime model.
-
-## 28. v1.0 acceptance criteria
+## 27. v1.0 acceptance criteria
 
 Version 1.0.0 is complete when it can:
 
-1. Query a public GitHub user's repositories.
-2. Query an individual repository.
-3. Transform the GitHub payload into the Web4 Repository schema.
-4. Validate the normalized object.
-5. Produce deterministic canonical JSON.
-6. Produce a SHA-256 content hash.
-7. Generate a Web4 manifest.
-8. Persist the manifest.
-9. Retrieve the manifest.
-10. Verify the manifest.
-11. Expose the process through an HTTP API.
-12. Run without requiring blockchain infrastructure.
-13. Keep provider-specific logic isolated from the Web4 core.
-14. Never execute arbitrary repository code during ingestion.
+1. Query a public GitHub user’s repositories
+2. Query an individual repository
+3. Transform the GitHub payload into the Web4 Repository schema
+4. Validate the normalized object
+5. Produce deterministic canonical JSON
+6. Produce a SHA-256 content hash
+7. Generate a Web4 manifest
+8. Persist the manifest
+9. Retrieve the manifest
+10. Verify the manifest
+11. Expose the process through an HTTP API
+12. Run without requiring blockchain infrastructure
+13. Keep provider-specific logic isolated from the Web4 core
+14. Never execute arbitrary repository code during ingestion
 
-## 29. Repository structure
+## 28. Repository structure
 
 ```text
 web4-publisher/
@@ -852,7 +823,7 @@ web4-publisher/
 │   ├── normalize.test.js
 │   ├── canonicalize.test.js
 │   ├── hash.test.js
-��   ├── manifest.test.js
+│   ├── manifest.test.js
 │   └── integration.test.js
 ├── publications/
 │   └── .gitkeep
@@ -864,22 +835,19 @@ web4-publisher/
     └── API.md
 ```
 
-## 30. Design summary
+## 29. Design summary
 
 Web4 Publisher is not a GitHub mirror. It is a provenance and publication layer.
 
-GitHub supplies the source facts. The publisher normalizes those facts into a canonical representation, validates them, computes a deterministic content hash, and emits a manifest. The manifest becomes a stable publication artifact independent of any blockchain requirement.
+GitHub supplies the source facts. The publisher normalizes those facts into a canonical representation, validates them, computes a deterministic content hash, and emits a manifest. The manifest becomes the publication artifact.
 
 This keeps the project aligned with the Web4 model while preserving a clean separation between source facts, identity, content, and publication.
 
 ---
 
-## 31. Version
+## 30. Version
 
 - Project: web4-publisher
 - Version: 1.0.0
 - Provider: GitHub
 - API version: GitHub REST API 2022-11-28
-
-This document describes the design for the initial production-ready architecture of the project.
-
