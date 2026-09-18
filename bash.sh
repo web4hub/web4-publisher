@@ -44,3 +44,32 @@ git commit -m "Add npm lockfile for CI" || echo "No lockfile changes to commit."
 
 echo "Pushing lockfile changes..."
 git push origin HEAD
+
+# Install the Netlify CLI
+npm install -g netlify-cli
+
+# Create a new site in Netlify
+ntl init
+
+# Deploy to a unique preview URL
+ntl deploy
+
+# Deploy the site into production
+ntl deploy --prod
+npm i -g vercel
+vercel init vite
+Vercel CLI
+Success! Initialized "vite" example in ~/your-folder.
+- To deploy, `cd vite` and run `vercel`.
+# Install Wrangler CLI
+npm install -g wrangler
+
+# Login to Cloudflare account from CLI
+wrangler login
+
+# Run your build command
+npm run build
+
+# Create new deployment
+npx wrangler pages publish dist
+
