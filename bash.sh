@@ -11,3 +11,6 @@ npm install --package-lock-only
 git add package-lock.json
 git commit -m "Add npm lockfile for CI"
 git push
+npm install --package-lock-only
+git add package-lock.json
+git commit -m "Add npm lockfile"
