@@ -1,5 +1,5 @@
 // src/core/validate.js
-import Ajv from "ajv";
+import Ajv2020 from "ajv/dist/2020.js";
 
 const repositorySchema = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
@@ -98,30 +98,24 @@ const repositorySchema = {
   }
 };
 
-const ajv = new Ajv({ allErrors: true, strict: true });
-const validate = ajv.compile(repositorySchema);
+const ajv = new Ajv2020({ allErrors: true, strict: true });
+const compiledValidator = ajv.compile(repositorySchema);
 
-/**
- * Validate a normalized Web4 resource.
- *
- * @param {unknown} resource The normalized resource to validate.
- * @returns {{ valid: boolean, errors: object[] | null }} Validation result.
- */
+/** Validate a normalized Web4 repository without mutating it. */
 export function validateResource(resource) {
-  const valid = validate(resource);
+  const valid = compiledValidator(resource);
 
   return {
     valid: Boolean(valid),
-    errors: valid ? null : validate.errors ?? []
+    errors: valid ? null : compiledValidator.errors ?? []
   };
 }
 
 /**
- * Validate a resource and throw a useful error when it is invalid.
+ * Validate a resource or throw an error containing every schema violation.
  *
- * @param {unknown} resource The normalized resource to validate.
- * @returns {unknown} The original resource.
- * @throws {Error} If the resource does not conform to the schema.
+ * @returns {unknown} The original resource when valid.
+ * @throws {Error} When the resource is invalid.
  */
 export function assertValidResource(resource) {
   const result = validateResource(resource);
