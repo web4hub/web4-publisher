@@ -1,1 +1,54 @@
-
+{
+  "$schema": "./schemas/web4.config.schema.json",
+  "version": 1,
+  "site": {
+    "name": "Web4 Publisher",
+    "description": "Semantic-first static publishing for Markdown and MDX.",
+    "url": "https://web4hub.github.io/web4-publisher",
+    "language": "en",
+    "basePath": "/web4-publisher/"
+  },
+  "content": {
+    "directory": "posts",
+    "extensions": [".md", ".mdx"],
+    "schema": "schemas/post.schema.json",
+    "includeDrafts": false,
+    "sortBy": "date",
+    "sortOrder": "descending"
+  },
+  "build": {
+    "outputDirectory": "dist",
+    "clean": true,
+    "generateIndex": true,
+    "minify": true
+  },
+  "themes": {
+    "default": "default",
+    "available": ["default", "glitch", "win95"]
+  },
+  "validation": {
+    "failOnError": true,
+    "failOnWarning": false,
+    "requireUniqueSlugs": true,
+    "requireUniqueRoutes": true
+  },
+  "semantic": {
+    "enabled": true,
+    "directives": {
+      "enabled": true,
+      "preserveInOutput": true
+    },
+    "stages": [
+      "detect",
+      "analyze",
+      "infer",
+      "classify",
+      "register",
+      "learn"
+    ]
+  },
+  "deployment": {
+    "provider": "github-pages",
+    "artifactDirectory": "dist"
+  }
+}
