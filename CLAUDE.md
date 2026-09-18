@@ -100,7 +100,44 @@ web4-publisher/
 ├── CONTRIBUTING.md
 ├── SECURITY.md
 └── LICENSE
+`docs/ARCHITECTURE.md` contains no function or variable definitions. It is an architecture document containing a repository directory tree.
 
+File: [docs/ARCHITECTURE.md](https://github.com/web4hub/web4-publisher/blob/2cd86857d7fa816841f674eafa99464693297ab1/docs/ARCHITECTURE.md)
+
+### Functions
+
+None defined.
+
+### Variables
+
+None defined.
+
+### Documented project components
+
+The file lists these components:
+
+- `src/index.js` — likely the package entry point.
+- `src/github/client.js` — GitHub API client functionality.
+- `src/github/mapper.js` — maps GitHub data into the project’s internal model.
+- `src/github/adapter.js` — adapts GitHub integration to the publisher.
+- `src/core/normalize.js` — normalization logic.
+- `src/core/validate.js` — validation logic.
+- `src/core/canonicalize.js` — canonical representation generation.
+- `src/core/hash.js` — hashing functionality.
+- `src/core/identity.js` — identity-related functionality.
+- `src/core/manifest.js` — manifest creation or processing.
+- `src/publisher/publisher.js` — primary publishing logic.
+- `src/publisher/filesystem.js` — filesystem persistence or output.
+- `src/publisher/index.js` — publisher module entry point.
+- `src/server/server.js` — server setup.
+- `src/server/routes.js` — server route definitions.
+- `schemas/*.json` — JSON schema definitions.
+- `test/*.test.js` — test files for the corresponding modules.
+- `publications/` — storage location for generated or published content.
+- `api.json` — likely API metadata or specification.
+- `web4.config.json` — project configuration.
+
+To list the actual functions and variables, the JavaScript files under `src/` would need to be inspected individually.
 The central content contract should be front matter + Markdown:
 
 ---
