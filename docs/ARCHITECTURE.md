@@ -1,4 +1,4 @@
-```execute
+```text
 web4-publisher/
 ├── README.md
 ├── LICENSE
@@ -49,3 +49,4 @@ web4-publisher/
     ├── PROVENANCE.md
     ├── SECURITY.md
     └── API.md
+```
