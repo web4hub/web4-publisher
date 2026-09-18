@@ -9,7 +9,7 @@ inputs:
   path:
     description: "Path of the directory containing the static assets."
     required: true
-    default: "_site/"
+    default: "/"
   retention-days:
     description: "Duration after which artifact will expire in days."
     required: false
