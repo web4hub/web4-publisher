@@ -9,4 +9,5 @@ cd web4-publisher
 find . -maxdepth 3 -type f | sort
 npm install --package-lock-only
 git add package-lock.json
-git commit -m "Add npm lockfile"
+git commit -m "Add npm lockfile for CI"
+git push
