@@ -1,1 +1,142 @@
+// src/core/validate.js
+import Ajv from "ajv";
 
+const repositorySchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://web4hub.org/schemas/repository.json",
+  title: "Web4 Repository",
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "type",
+    "identity",
+    "source",
+    "content",
+    "status",
+    "metrics",
+    "provenance"
+  ],
+  properties: {
+    type: { const: "web4:Repository" },
+    identity: {
+      type: "object",
+      additionalProperties: false,
+      required: ["provider", "owner", "name", "canonical"],
+      properties: {
+        provider: { type: "string", minLength: 1 },
+        owner: { type: "string", minLength: 1 },
+        name: { type: "string", minLength: 1 },
+        canonical: {
+          type: "string",
+          pattern: "^[a-z0-9]+:[^\\s/]+/[^\\s/]+$"
+        }
+      }
+    },
+    source: {
+      type: "object",
+      additionalProperties: false,
+      required: ["url", "api"],
+      properties: {
+        url: { type: "string", minLength: 1 },
+        api: { type: "string", minLength: 1 },
+        clone: { type: "string", minLength: 1 },
+        ssh: { type: "string", minLength: 1 }
+      }
+    },
+    content: {
+      type: "object",
+      additionalProperties: false,
+      required: ["description", "language", "default_branch"],
+      properties: {
+        description: { type: ["string", "null"] },
+        language: { type: ["string", "null"] },
+        default_branch: { type: "string", minLength: 1 }
+      }
+    },
+    status: {
+      type: "object",
+      additionalProperties: false,
+      required: ["visibility", "fork", "archived", "disabled"],
+      properties: {
+        visibility: { type: "string", minLength: 1 },
+        fork: { type: "boolean" },
+        archived: { type: "boolean" },
+        disabled: { type: "boolean" }
+      }
+    },
+    metrics: {
+      type: "object",
+      additionalProperties: false,
+      required: ["stars", "forks", "watchers", "open_issues"],
+      properties: {
+        stars: { type: "integer", minimum: 0 },
+        forks: { type: "integer", minimum: 0 },
+        watchers: { type: "integer", minimum: 0 },
+        open_issues: { type: "integer", minimum: 0 }
+      }
+    },
+    provenance: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "provider",
+        "repository_id",
+        "node_id",
+        "created_at",
+        "updated_at",
+        "pushed_at"
+      ],
+      properties: {
+        provider: { type: "string", minLength: 1 },
+        repository_id: { type: "integer", minimum: 1 },
+        node_id: { type: "string", minLength: 1 },
+        created_at: { type: "string", minLength: 1 },
+        updated_at: { type: "string", minLength: 1 },
+        pushed_at: { type: ["string", "null"] }
+      }
+    }
+  }
+};
+
+const ajv = new Ajv({ allErrors: true, strict: true });
+const validate = ajv.compile(repositorySchema);
+
+/**
+ * Validate a normalized Web4 resource.
+ *
+ * @param {unknown} resource The normalized resource to validate.
+ * @returns {{ valid: boolean, errors: object[] | null }} Validation result.
+ */
+export function validateResource(resource) {
+  const valid = validate(resource);
+
+  return {
+    valid: Boolean(valid),
+    errors: valid ? null : validate.errors ?? []
+  };
+}
+
+/**
+ * Validate a resource and throw a useful error when it is invalid.
+ *
+ * @param {unknown} resource The normalized resource to validate.
+ * @returns {unknown} The original resource.
+ * @throws {Error} If the resource does not conform to the schema.
+ */
+export function assertValidResource(resource) {
+  const result = validateResource(resource);
+
+  if (!result.valid) {
+    const details = result.errors
+      .map(({ instancePath, keyword, message }) =>
+        `${instancePath || "/"} ${keyword}: ${message}`
+      )
+      .join("; ");
+
+    throw new Error(`Invalid Web4 resource: ${details}`);
+  }
+
+  return resource;
+}
+
+export { repositorySchema };
