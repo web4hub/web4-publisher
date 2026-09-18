@@ -346,7 +346,53 @@ export function mapGitHubRepository(repo) {
   };
 }
 ```
+Implemented and committed the blog experience to `web4hub/web4-publisher`.
 
+### Added
+
+- Home page with featured publications
+- Blog listing page at `#/blog`
+- Individual post pages at `#/blog/:slug`
+- About page at `#/about`
+- 404 page
+- Hash-based client-side routing
+- Blog search
+- Category filtering
+- Updated navigation and links
+- Accessible labels and semantic `<time>` elements
+- Responsive layouts for mobile
+- Dynamic browser titles
+- Reusable page components
+
+### New files
+
+- `src/pages/HomePage.jsx`
+- `src/pages/BlogPage.jsx`
+- `src/pages/AboutPage.jsx`
+- `src/pages/NotFoundPage.jsx`
+
+### Updated files
+
+- `src/App.jsx`
+- `src/components/Header.jsx`
+- `src/components/PostCard.jsx`
+- `src/components/PostView.jsx`
+- `src/styles/base.scss`
+
+Commit:
+
+https://github.com/web4hub/web4-publisher/commit/fca3b43abd3ca9c9827b094aafefe643a9351970
+
+The main routes are:
+
+```text
+#/                 Home
+#/blog             Blog index
+#/blog/next        Individual publication
+#/about            About page
+```
+
+One follow-up improvement would be replacing hash routing with generated static post pages so individual publications have crawlable URLs and better SEO on GitHub Pages.
 ## 12. Validation
 
 Every normalized resource must validate against a JSON Schema before it is hashed or published.
