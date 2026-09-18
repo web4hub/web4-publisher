@@ -92,7 +92,7 @@ The exact fields and validation rules are defined by the schemas in the
 [`schemas/`](schemas/) directory.
 
 ## Semantic directives
-
+[changelog](https://github.blog/changelog/feed/)
 Web4 Publisher supports directive-style semantic stages:
 
 ```text
