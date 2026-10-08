@@ -25,6 +25,7 @@ Yes. That is the right direction.
 I would make web4hub/web4-publisher the canonical repository and treat the PDF specification as the initial product specification, not as a throwaway prototype.
 
 The architecture should evolve slightly beyond the tree you gave:
+
 ```cmd
 web4-publisher/
 ├── .github/
@@ -74,6 +75,7 @@ web4-publisher/
 └── LICENSE
 ```
 The key pipeline becomes:
+
 ```console
                     WEB4 PUBLISHER
                          │
@@ -118,8 +120,7 @@ The key pipeline becomes:
               ▼                     ▼
         GitHub Pages             Vercel
 ```
-And I would make the content format explicit from day one:
-
+# And I would make the content format explicit from day one:
 ---
 title: "Web4 Publisher"
 description: "Semantic publishing for Web4."
