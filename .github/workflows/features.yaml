@@ -1,13 +1,63 @@
-title: "Web4 Publisher"
-slug: "web4-publisher"
-description: "A semantic-first publishing engine for Web4."
-author: "Web4Hub"
-date: "2026-09-18"
-tags:
-  - web4
-  - publishing
-draft: false
+name: Feature Validation
 
-# Web4 Publisher
+on:
+  push:
+    branches:
+      - "**"
+    paths:
+      - "posts/**"
+      - "schemas/**"
+      - "src/**"
+      - "scripts/**"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.*"
+      - ".github/workflows/features.yaml"
+  pull_request:
+    paths:
+      - "posts/**"
+      - "schemas/**"
+      - "src/**"
+      - "scripts/**"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.*"
+      - ".github/workflows/features.yaml"
+  workflow_dispatch:
 
-The publication body goes here.
+permissions:
+  contents: read
+
+concurrency:
+  group: feature-validation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-features:
+    name: Validate publisher features
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate publication content and metadata
+        run: npm run validate
+
+      - name: Run automated tests
+        run: npm test
+
+      - name: Verify production build
+        run: npm run build
