@@ -1,7 +1,7 @@
 ---
 title: Building Web4 Decentralized Platforms
 date: 2026-09-17
-author: Aura Ecosystem
+author: Seriki Walter Yakub 
 tags:
   - Web4
   - AI
