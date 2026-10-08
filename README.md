@@ -1,3 +1,19 @@
+---
+title: "Web4 Publisher"
+slug: "web4-publisher"
+description: "A semantic-first publishing engine for Web4."
+author: "Web4Hub"
+date: "2026-09-18"
+tags:
+  - web4
+  - publishing
+draft: false
+---
+
+# Web4 Publisher
+
+The publication body goes here.
+
 # Web4 Publisher
 
 Semantic-first static publishing for Markdown and MDX.
@@ -70,8 +86,7 @@ npm run preview
 Add Markdown publications to the `posts/` directory. A publication should
 include YAML front matter followed by its Markdown body:
 
-```markdown
----
+```yaml
 title: "Web4 Publisher"
 slug: "web4-publisher"
 description: "A semantic-first publishing engine for Web4."
@@ -81,16 +96,13 @@ tags:
   - web4
   - publishing
 draft: false
----
 
 # Web4 Publisher
 
 The publication body goes here.
-```
-
 The exact fields and validation rules are defined by the schemas in the
 [`schemas/`](schemas/) directory.
-
+```
 ## Semantic directives
 [changelog](https://github.blog/changelog/feed/)
 Web4 Publisher supports directive-style semantic stages:
