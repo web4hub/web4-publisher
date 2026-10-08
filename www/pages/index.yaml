@@ -1,1 +1,127 @@
+# Web4 Publisher page registry
+# Versioned source of truth for the pages exposed by the publication.
+version: 1
+site:
+  name: Web4 Publisher
+  description: Semantic-first static publishing for Markdown and MDX.
+  base_path: /
+  language: en
+  default_route: /
+  not_found_route: /404
 
+defaults:
+  theme: default
+  robots: index,follow
+  content_type: text/html; charset=utf-8
+
+navigation:
+  primary:
+    - page: home
+      label: Home
+      order: 1
+    - page: blog
+      label: Blog
+      order: 2
+    - page: about
+      label: About
+      order: 3
+  footer:
+    - page: about
+      label: About Web4 Publisher
+      order: 1
+    - label: Source code
+      url: https://github.com/web4hub/web4-publisher
+      external: true
+      order: 2
+
+pages:
+  - id: home
+    path: /
+    route: /
+    title: Web4 Publisher
+    description: Publish knowledge. Validate meaning.
+    component: HomePage
+    template: landing
+    indexable: true
+    navigation: false
+
+  - id: blog
+    path: /blog
+    route: /blog
+    title: Blog
+    title_template: "{title} — Web4 Publisher"
+    description: Notes on semantic publishing, open knowledge, identity and connected tools.
+    component: BlogPage
+    template: listing
+    indexable: true
+    navigation: true
+    content_source: posts/
+    pagination:
+      enabled: false
+      page_size: 12
+    filters:
+      - search
+      - category
+
+  - id: publication
+    path: /blog/:slug
+    route: /blog/:slug
+    title_template: "{title} — Web4 Publisher"
+    description_source: front_matter.description
+    component: PostView
+    template: article
+    indexable: true
+    navigation: false
+    content_source: posts/
+    resolve_by: slug
+    required_front_matter:
+      - title
+      - slug
+      - description
+      - author
+      - date
+      - category
+      - tags
+      - theme
+      - draft
+
+  - id: about
+    path: /about
+    route: /about
+    title: About — Web4 Publisher
+    description: Learn about the Web4 Publisher project and its semantic-first publishing approach.
+    component: AboutPage
+    template: content
+    indexable: true
+    navigation: true
+
+  - id: not-found
+    path: /404
+    route: /404
+    title: Page not found — Web4 Publisher
+    description: The requested publication page could not be found.
+    component: NotFoundPage
+    template: error
+    indexable: false
+    navigation: false
+
+routing:
+  strategy: hash
+  home: /
+  not_found: /404
+  trailing_slash: ignore
+  decode_path_segments: true
+  unknown_route: not-found
+  publication_route: /blog/:slug
+
+seo:
+  canonical_base_url: https://web4hub.github.io/web4-publisher/
+  sitemap: true
+  robots_txt: true
+  open_graph: true
+  json_ld: true
+
+build:
+  output_directory: dist
+  static_hosting: true
+  validate_before_build: true
