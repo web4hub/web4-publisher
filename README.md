@@ -245,6 +245,11 @@ Set up Vercel for me. [Fetch ](https://vercel.com/get-started.md) and follow it.
 The generated `dist/` directory contains the static site and can be published
 by any static hosting provider.
 
+>_
+npm i -g vercel
+vercel login
+vercel
+
 ### GitHub Pages
 
 The repository includes GitHub Actions workflows for Pages deployment. Enable
