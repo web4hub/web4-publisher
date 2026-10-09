@@ -80,3 +80,19 @@ npm run build
 npm i -g vercel
 vercel login
 vercel
+
+
+# Plugin for Claude Code, Codex, Grok Build, Cursor, Copilot, Kimi Code
+npx plugins add vercel/vercel-plugin
+ 
+# Plugin for OpenCode
+opencode plugin add github:vercel/vercel-plugin
+ 
+# Skills for any other agent
+npx skills add vercel-labs/agent-skills
+ 
+# Let your agent manage projects, deployments, and logs
+npx -y add-mcp https://mcp.vercel.com -g
+ 
+# Route your agent's model calls through AI Gateway
+npx vercel ai-gateway setup
