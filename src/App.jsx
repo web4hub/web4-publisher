@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import Header from "./components/Header.jsx";
 import Footer from "./components/Footer.jsx";
 import AboutPage from "./pages/AboutPage.jsx";
@@ -189,5 +190,6 @@ export default function App() {
     <Header />
     <main className="container">{page}</main>
     <Footer />
+    <Analytics />
   </div>;
 }
