@@ -1,0 +1,36 @@
+```yaml
+name: End to End Tests
+
+on:
+  repository_dispatch:
+    types:
+      - vercel.deployment.success
+
+jobs:
+  run-e2es:
+    if: >-
+      github.event_name == 'repository_dispatch' &&
+      github.event.action == 'vercel.deployment.success' &&
+      github.event.client_payload.url != ''
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run end-to-end tests
+        run: npx playwright test
+        env:
+          BASE_URL: ${{ github.event.client_payload.url }}
+```
