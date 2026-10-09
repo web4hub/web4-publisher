@@ -12,7 +12,11 @@ function files(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const target = path.join(directory, entry.name);
     if (entry.isDirectory()) return files(target);
-    return target.endsWith(".md") ? [target] : [];
+    // Underscore-prefixed Markdown files are publisher support files (for
+    // example _template.md and _pages.md), not publishable articles.
+    // CODEX.md is project/workflow documentation rather than a post.
+    const supportFile = entry.name.startsWith("_") || entry.name.toLowerCase() === "codex.md";
+    return target.endsWith(".md") && !supportFile ? [target] : [];
   });
 }
 
