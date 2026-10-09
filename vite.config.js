@@ -31,19 +31,10 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'src/browsers.liquid/index.html'),
-        'theme-default': resolve(
-          __dirname,
-          'src/styles/reset.scss'
-        ),
-        'theme-win95': resolve(
-          __dirname,
-          'src/styles/win95.scss'
-        ),
-        'flavour-glitch': resolve(
-          __dirname,
-          'src/styles/flavours/glitch/reset.scss'
-        ),
+        main: resolve(__dirname, 'index.html'),
+        'theme-default': resolve(__dirname, 'src/styles/reset.scss'),
+        'theme-win95': resolve(__dirname, 'src/styles/win95.scss'),
+        'flavour-glitch': resolve(__dirname, 'src/styles/flavours/glitch/reset.scss'),
       },
     },
   },
