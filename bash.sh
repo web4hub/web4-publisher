@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+# !/usr/bin/env bash
 set -euo pipefail
 
 REPO_URL="https://github.com/web4hub/web4-publisher.git"
@@ -111,3 +111,5 @@ npx vercel ai-gateway setup
 npm i -g vercel
 # yarn install
 yarn add @vercel/analytics
+# add lmlm agent plugins
+npx plugins add vercel/vercel-plugin
