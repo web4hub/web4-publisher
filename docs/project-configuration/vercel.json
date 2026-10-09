@@ -1,1 +1,7 @@
+{
+"$schema": "https://openapi.vercel.sh/vercel.json",
+"framework": "vite",
+"buildCommand": "npm run validate && npm run generate:seo && vite build && npm run prerender:seo",
+"outputDirectory": "dist"
+}
 
