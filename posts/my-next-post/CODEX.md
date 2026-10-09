@@ -1,6 +1,10 @@
 ---
 title: Building Web4 Decentralized Platforms
-date: 2026-09-17
+date: "2026-09-17"
+slug: building-web4-decentralized-platforms
+category: web4
+theme: glitch
+draft: false
 author: Aura Ecosystem
 tags:
   - Web4
