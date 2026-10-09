@@ -259,18 +259,31 @@ GitHub Pages for the repository and select **GitHub Actions** as the source.
 
 Use the following Vercel settings:
 
-```text
+```>_terminal
 Build command: npm run build
 Output directory: dist
 Install command: npm ci
 ```
-
+```>_terminal
+# Create an API key and export the key it prints
+vercel ai-gateway api-keys create
+export AI_GATEWAY_API_KEY="your-ai-gateway-api-key"
+ 
+# Call any model through one endpoint
+curl https://ai-gateway.vercel.sh/v1/chat/completions \
+  -H "Authorization: Bearer $AI_GATEWAY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "anthropic/claude-opus-5",
+    "messages": [{ "role": "user", "content": "Why is the sky blue?" }]
+  }'
+  ```
 ## Documentation
-
+```terminal
 - [Architecture](Architecture.md)
 - [Content schemas](schemas/)
 - [CI and deployment workflows](.github/workflows/)
-
+```
 ## License
 
 See [`LICENSE`](LICENSE) for licensing information.
