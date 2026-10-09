@@ -107,3 +107,5 @@ npx -y add-mcp https://mcp.vercel.com -g
  
 # Route your agent's model calls through AI Gateway
 npx vercel ai-gateway setup
+#install
+npm i -g vercel
