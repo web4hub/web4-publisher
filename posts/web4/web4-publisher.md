@@ -1,6 +1,6 @@
 ---
 title: "Web4 Publisher"
-slug: "web4-publisher"
+slug: "web4-publisher-engine"
 description: "A semantic-first publishing engine for Web4."
 author: "Web4Hub"
 date: "2026-09-17"
