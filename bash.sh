@@ -72,4 +72,8 @@ npm run build
 
 # Create new deployment
 npx wrangler pages publish dist
-
+-m
+npm install
+npm run validate
+npm test
+npm run build
