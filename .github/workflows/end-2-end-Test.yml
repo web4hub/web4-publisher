@@ -1,4 +1,3 @@
-```yaml
 name: End to End Tests
 
 on:
@@ -33,4 +32,3 @@ jobs:
         run: npx playwright test
         env:
           BASE_URL: ${{ github.event.client_payload.url }}
-```
