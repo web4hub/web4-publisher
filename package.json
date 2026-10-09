@@ -1,16 +1,17 @@
 {
   "name": "@web4hub/web4-publisher",
   "version": "1.0.0",
-  "description": "Semantic-first static publishing engine for Web4.",
+  "description": "Semantic-first publishing engine for Web4.",
   "type": "module",
   "private": false,
   "scripts": {
     "dev": "vite",
-    "build": "npm run validate && npm run generate:seo && vite build",
+    "build": "npm run validate && npm run generate:seo && vite build && npm run prerender:seo",
     "preview": "vite preview",
     "validate": "node scripts/validate-content.js",
     "generate:index": "node scripts/generate-index.js",
     "generate:seo": "node scripts/generate-seo.js",
+    "prerender:seo": "node scripts/prerender-seo.js",
     "test": "vitest run"
   },
   "dependencies": {
