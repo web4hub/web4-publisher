@@ -77,3 +77,6 @@ npm install
 npm run validate
 npm test
 npm run build
+npm i -g vercel
+vercel login
+vercel
