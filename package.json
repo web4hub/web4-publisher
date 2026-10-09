@@ -6,10 +6,11 @@
   "private": false,
   "scripts": {
     "dev": "vite",
-    "build": "npm run validate && vite build",
+    "build": "npm run validate && npm run generate:seo && vite build",
     "preview": "vite preview",
     "validate": "node scripts/validate-content.js",
     "generate:index": "node scripts/generate-index.js",
+    "generate:seo": "node scripts/generate-seo.js",
     "test": "vitest run"
   },
   "dependencies": {
