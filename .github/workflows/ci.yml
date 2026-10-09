@@ -25,5 +25,15 @@ jobs:
         run: npm run validate
       - name: Test
         run: npm test
-      - name: Build
+      - name: Build with SEO artifacts
         run: npm run build
+      - name: Verify generated SEO output
+        run: |
+          test -s dist/sitemap.xml
+          test -s dist/robots.txt
+          test -s dist/index.html
+          test -s dist/about/index.html
+          test -s dist/blog/index.html
+          test -s dist/404.html
+          grep -q 'application/ld+json' dist/index.html
+          grep -q 'og:title' dist/about/index.html
