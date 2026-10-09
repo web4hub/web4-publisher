@@ -109,3 +109,5 @@ npx -y add-mcp https://mcp.vercel.com -g
 npx vercel ai-gateway setup
 #install
 npm i -g vercel
+# yarn install
+yarn add @vercel/analytics
